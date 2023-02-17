@@ -1,6 +1,5 @@
 package com.smarthome.webapp.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.smarthome.webapp.interfaces.DeviceInterface;
@@ -14,6 +13,7 @@ public class DeviceController implements DeviceInterface {
 
     @Override
     public void createDevice(String name, String userID, String mqttData, DeviceRepository repository) {
-        repository.save(new Device(name, userID, mqttData));
+        Device thisDevice = new Device(name, userID, mqttData);
+        repository.save(thisDevice);
     }
 }
