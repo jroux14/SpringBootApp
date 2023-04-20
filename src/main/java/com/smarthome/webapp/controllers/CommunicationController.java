@@ -9,7 +9,6 @@ import com.smarthome.webapp.ApplicationConstants;
 import com.smarthome.webapp.DeviceConstants;
 import com.smarthome.webapp.repositories.DeviceRepository;
 
-@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 public class CommunicationController {
 	@Autowired
@@ -21,10 +20,10 @@ public class CommunicationController {
 
 	int testNum = 0;
 
-    @GetMapping("/test")
-	public String testCall() {
-		deviceController.createDevice("test"+testNum, "12345", "test data", deviceRepository);
-		testNum += 1;
-		return "{ \"test\" : \"Greetings from Spring Boot!\" }";
-	}
+    // @GetMapping("/test")
+	// public String testCall() {
+	// 	deviceController.createDevice("test"+testNum, "12345", "test data", deviceRepository);
+	// 	testNum += 1;
+	// 	return "{ \"test\" : \"Greetings from Spring Boot!\" }";
+	// }
 }
