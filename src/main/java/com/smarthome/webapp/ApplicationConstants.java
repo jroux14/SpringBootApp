@@ -1,5 +1,7 @@
 package com.smarthome.webapp;
 
-public class ApplicationConstants {
-    public ApplicationConstants() {}
+public final class ApplicationConstants {
+    private ApplicationConstants() {}
+
+    public static final String ENCRYPTION_KEY = "SuperSekretKey";
 }

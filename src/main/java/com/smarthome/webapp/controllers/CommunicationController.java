@@ -14,11 +14,11 @@ public class CommunicationController {
 	@Autowired
 	private DeviceRepository deviceRepository;
 
-	private ApplicationConstants appConstants = new ApplicationConstants();
+	// private ApplicationConstants appConstants = new ApplicationConstants();
 	private DeviceConstants deviceConstants = new DeviceConstants();
 	private DeviceController deviceController = new DeviceController();
 
-	int testNum = 0;
+	
 
     // @GetMapping("/test")
 	// public String testCall() {

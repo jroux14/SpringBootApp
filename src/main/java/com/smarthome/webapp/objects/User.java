@@ -1,7 +1,5 @@
 package com.smarthome.webapp.objects;
 
-import java.io.Console;
-
 import org.json.simple.JSONObject;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -36,5 +34,21 @@ public class User {
     
     public String getUserID(){
         return this.userID;
+    }
+
+    public void setPassword(String password){
+        this.pwd = password;
+    }
+
+    public void setUsername(String username){
+        this.username = username;
+    }
+
+    public void setID(String id){
+        this.userID = id;
+    }
+
+    public void setName(String name){
+        this.firstName = name;
     }
 }
