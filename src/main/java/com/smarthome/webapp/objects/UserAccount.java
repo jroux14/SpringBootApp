@@ -1,5 +1,6 @@
 package com.smarthome.webapp.objects;
 
+import java.util.Date;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -39,6 +40,8 @@ public class UserAccount implements UserDetails{
     private String username;
     private String password;
     private String authorities;
+    private String refreshToken;
+    private Date refreshTokenExp;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -59,6 +62,22 @@ public class UserAccount implements UserDetails{
 
     public String getUserId() {
         return this.userId;
+    }
+
+    public String getRefreshToken() {
+        return this.refreshToken;
+    }
+
+    public Date getRefreshTokenExp() {
+        return this.refreshTokenExp;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public void setRefreshTokenExp(Date refreshTokenExp) {
+        this.refreshTokenExp = refreshTokenExp;
     }
     
     @Override

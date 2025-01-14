@@ -8,4 +8,7 @@ import com.smarthome.webapp.objects.UserAccount;
 public interface UserAccountRepository extends MongoRepository<UserAccount, String> {
     @Query("{ 'username' : { $eq: ?0 } }")
     UserAccount findByUsername(String username);
+
+    @Query("{ 'refreshToken' : { $eq: ?0 } }")
+    UserAccount findByRefreshToken(String refreshToken);
 }

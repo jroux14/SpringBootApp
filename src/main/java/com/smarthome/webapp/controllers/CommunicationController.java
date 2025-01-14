@@ -12,10 +12,4 @@ public class CommunicationController implements CommunicationInterface {
 	@Autowired
 	private DeviceRepository deviceRepository;
 	
-    // @GetMapping("/test")
-	// public String testCall() {
-	// 	deviceController.createDevice("test"+testNum, "12345", "test data", deviceRepository);
-	// 	testNum += 1;
-	// 	return "{ \"test\" : \"Greetings from Spring Boot!\" }";
-	// }
 }

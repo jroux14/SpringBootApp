@@ -44,7 +44,7 @@ public class SecurityConfiguration {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200")); // Replace with your frontend origin
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "RefreshToken"));
         configuration.setAllowCredentials(true); // If you need to send cookies
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -64,16 +64,6 @@ public class SecurityConfiguration {
                 .and()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);  // No sessions
-
-        // Basic Auth Configuration
-        // http.csrf(httpSecurityCsrfConfigurer -> httpSecurityCsrfConfigurer.disable())
-        // .cors().and()
-        // .httpBasic(Customizer.withDefaults())
-        // .authorizeHttpRequests(
-        //     authorizeRequest -> authorizeRequest
-        //             .requestMatchers("/smarthome/test").hasAuthority("defaultUser")
-        //             .anyRequest().permitAll()
-        // ).formLogin(Customizer.withDefaults());
 
         return http.build();
     }
