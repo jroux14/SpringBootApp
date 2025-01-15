@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.smarthome.webapp.objects.Device;
 import com.smarthome.webapp.objects.UserInfo;
 import com.smarthome.webapp.services.AuthService;
+import com.smarthome.webapp.services.DeviceService;
 import com.smarthome.webapp.services.UserService;
 
 @RestController
@@ -24,6 +26,9 @@ public class UserController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private DeviceService deviceService;
 
     @GetMapping("/test")
     public ResponseEntity<HashMap<String,Object>> test() {
@@ -46,6 +51,10 @@ public class UserController {
             UserInfo user = userService.getUserInfoByUserId(userId);
             if (user != null) {
                 responseBody.put("user", user);
+                Device[] userDevices = this.deviceService.getDevicesByUserId(userId);
+                if (userDevices != null) {
+                    responseBody.put("devices", userDevices);
+                }
                 responseBody.put("success", true);
             } else {
                 responseBody.put("error", "User not found");

@@ -36,12 +36,12 @@ public class UserAccount implements UserDetails{
     @GeneratedValue(strategy = GenerationType.AUTO)
     private String id;
 
-    private String userId;
+    @Getter @Setter private String userId;
     private String username;
     private String password;
     private String authorities;
-    private String refreshToken;
-    private Date refreshTokenExp;
+    @Getter @Setter private String refreshToken;
+    @Getter @Setter private Date refreshTokenExp;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -59,27 +59,9 @@ public class UserAccount implements UserDetails{
     public String getUsername(){
         return this.username;
     }
-
-    public String getUserId() {
-        return this.userId;
-    }
-
-    public String getRefreshToken() {
-        return this.refreshToken;
-    }
-
-    public Date getRefreshTokenExp() {
-        return this.refreshTokenExp;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public void setRefreshTokenExp(Date refreshTokenExp) {
-        this.refreshTokenExp = refreshTokenExp;
-    }
     
+
+    /* TODO */
     @Override
     public boolean isAccountNonExpired() {
         return true;

@@ -18,8 +18,6 @@ public class AuthenticationController {
     @Autowired
     AuthService authService;
 
-    public AuthenticationController() {}
-
     @PostMapping("/create")
     public ResponseEntity<HashMap<String,Object>> create(@RequestBody HashMap<String, String> userInfo){
        return this.authService.createUser(userInfo);
