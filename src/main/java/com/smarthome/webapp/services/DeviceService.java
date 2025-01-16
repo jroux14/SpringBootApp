@@ -36,7 +36,7 @@ public class DeviceService {
                 Device newDevice = Device.builder()
                 .deviceID(device.get("deviceID").toString())
                 .userId(device.get("userID").toString())
-                .deviceType(device.get("userID").toString())
+                .deviceType(device.get("deviceType").toString())
                 .deviceName(device.get("deviceName").toString())
                 .displayWidth((int)device.get("displayWidth"))
                 .displayHeight((int)device.get("displayHeight"))
