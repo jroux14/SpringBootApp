@@ -66,6 +66,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
         } catch (Exception e) {
             // Return 500 (Unknown exception)
+            System.out.println(e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }

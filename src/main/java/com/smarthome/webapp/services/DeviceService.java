@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smarthome.webapp.objects.Device;
 import com.smarthome.webapp.repositories.DeviceRepository;
 
@@ -28,24 +30,13 @@ public class DeviceService {
         return this.deviceRepository.getByDeviceId(deviceId);
     }
 
-    public ResponseEntity<HashMap<String,Object>> registerDevice(HashMap<String,Object> device) {
+    public ResponseEntity<String> registerDevice(Device device) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
         try {
             if (device != null) {
-
-                Device newDevice = Device.builder()
-                .deviceID(device.get("deviceID").toString())
-                .userId(device.get("userID").toString())
-                .deviceType(device.get("deviceType").toString())
-                .deviceName(device.get("deviceName").toString())
-                .displayWidth((int)device.get("displayWidth"))
-                .displayHeight((int)device.get("displayHeight"))
-                .posX((int)device.get("posX"))
-                .posY((int)device.get("posY"))
-                .item(device.get("item")).build();
-
-                this.saveDevice(newDevice);
-
+                this.saveDevice(device);
                 responseBody.put("success", true);
             } else {
                 responseBody.put("error", "No Device");
@@ -57,22 +48,33 @@ public class DeviceService {
             responseBody.put("success", false);
         }
 
-        return new ResponseEntity<HashMap<String,Object>>(responseBody, HttpStatus.OK);
+        String resp = objectMapper.writeValueAsString(responseBody);
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
     }
 
     /* TODO: Flesh this method out some more */
-    public ResponseEntity<HashMap<String,Object>> updateItem(String deviceId, Object item) {
+    public ResponseEntity<String> updateDevice(Device device) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
 
-        // System.out.println(item);
-        Device device = getDeviceById(deviceId);
-        this.deviceRepository.deleteByDeviceId(deviceId);
-        device.setItem(item);
-
+        this.deviceRepository.deleteByDeviceId(device.getDeviceID());
         this.deviceRepository.save(device);
 
         responseBody.put("success", true);
+        String resp = objectMapper.writeValueAsString(responseBody);
 
-        return new ResponseEntity<HashMap<String,Object>>(responseBody, HttpStatus.OK);
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
+    }
+
+    public ResponseEntity<String> deleteDevice(Device device) throws JsonProcessingException {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        this.deviceRepository.deleteByDeviceId(device.getDeviceID());
+
+        responseBody.put("success", true);
+        String resp = objectMapper.writeValueAsString(responseBody);
+
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
     }
 }
