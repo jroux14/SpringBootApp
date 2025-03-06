@@ -1,5 +1,11 @@
 package com.smarthome.webapp;
 
-public class DeviceConstants {
-    public DeviceConstants() {}
+public final class DeviceConstants {
+    private DeviceConstants() {}
+
+    public static String BROKER_URL = "tcp://localhost:1883";
+    public static String MQTT_ID = "SmartHomeServer";
+    public static String MQTT_USER = "smarthome";
+    public static String MQTT_PWD = "admin";
+
 }

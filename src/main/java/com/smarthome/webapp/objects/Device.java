@@ -1,6 +1,9 @@
 package com.smarthome.webapp.objects;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -19,14 +22,15 @@ import lombok.Setter;
 @Document("devices")
 public class Device {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private String id;
+    
     private String userId;
-    private String deviceType;
     private String deviceName;
-    private String deviceID;
-    private int displayWidth;
-    private int displayHeight;
-    private int posX;
-    private int posY;
+    private String deviceNameFriendly;
+    private String deviceType;
+    private Object data;
     private Object item;
-    private String mqttData;
+
 }
