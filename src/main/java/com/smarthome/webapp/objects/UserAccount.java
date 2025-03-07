@@ -36,30 +36,19 @@ public class UserAccount implements UserDetails{
     @GeneratedValue(strategy = GenerationType.AUTO)
     private String id;
 
-    @Getter @Setter private String userId;
+    private String userId;
     private String username;
     private String password;
     private String authorities;
-    @Getter @Setter private String refreshToken;
-    @Getter @Setter private Date refreshTokenExp;
+    private String refreshToken;
+    private Date refreshTokenExp;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Arrays.stream(this.authorities.split(AUTHORITIES_DELIMITER))
                      .map(SimpleGrantedAuthority::new)
                      .collect(Collectors.toList());
-    }
-
-    @Override
-    public String getPassword(){
-        return this.password;
-    }
-
-    @Override
-    public String getUsername(){
-        return this.username;
-    }
-    
+    }    
 
     /* TODO */
     @Override
