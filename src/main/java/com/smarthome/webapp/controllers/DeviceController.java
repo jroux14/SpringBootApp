@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -72,6 +73,20 @@ public class DeviceController implements DeviceInterface {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return resp;
+    }
+
+    @GetMapping("get/data/{deviceName}")
+    public ResponseEntity<String> getDeviceData(@PathVariable String deviceName) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            resp = this.deviceService.getDeviceDataByName(deviceName);
+        } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
 

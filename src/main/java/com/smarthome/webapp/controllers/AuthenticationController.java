@@ -63,10 +63,31 @@ public class AuthenticationController {
         return resp;
     }
 
-    @GetMapping("verify")
-    public ResponseEntity<String> verifyUserKey(@RequestHeader("Authorization") String token) throws JsonProcessingException {
+    @GetMapping("logout")
+    public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
         String jwt = token.substring(7);
         
-        return this.authService.verifyUserKey(jwt);
+        try {
+            resp = this.authService.handleLogout(jwt);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return resp;
+    }
+
+    @GetMapping("verify")
+    public ResponseEntity<String> verifyUserKey(@RequestHeader("Authorization") String token) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+        String jwt = token.substring(7);
+        
+        try {
+            resp = this.authService.verifyUserKey(jwt);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return resp;
     }
 }

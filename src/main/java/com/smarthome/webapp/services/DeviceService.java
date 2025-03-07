@@ -3,6 +3,7 @@ package com.smarthome.webapp.services;
 import java.util.HashMap;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
@@ -14,11 +15,13 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
+import org.springframework.util.NumberUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.smarthome.webapp.objects.Device;
 import com.smarthome.webapp.repositories.DeviceRepository;
 
@@ -49,31 +52,84 @@ public class DeviceService {
                         ObjectMapper objectMapper = new ObjectMapper();
         
                         try {
-                            JsonNode payloadJson = objectMapper.readValue(payloadObj.toString(), JsonNode.class);
-                            JsonNode dataJson = payloadJson.get("data");
+                            if (topic.equals("smarthome/devices")) {
+                                JsonNode payloadJson = objectMapper.readValue(payloadObj.toString(), JsonNode.class);
+                                this.newDeviceConnected(payloadJson);
+                            } else {
+                                /* 
+                                 * Typical format of topics other than smarthome/devices should be
+                                 * {deviceName}/{peripheralType}/{peripheralName}/status
+                                 */
+                                String[] topicArr = topic.split("/");
+                                String deviceName = topicArr[0];
 
-                            if (dataJson != null) {
-                                String status = dataJson.get("status").asText();
-                                if (status.equals("online")) {
-                                    String deviceName = payloadJson.get("deviceName").asText();
-                                    String deviceType = payloadJson.get("deviceType").asText();
-                                    if (deviceName != null && deviceType != null) {
-                                        if (this.getDeviceByName(deviceName) == null) {
-                                            System.out.println("Received message on topic: " + topic + ", device name: " + deviceName);
-                                            Device device = Device.builder()
-                                                .deviceName(deviceName)
-                                                .deviceType(deviceType)
-                                                .data(objectMapper.treeToValue(dataJson, Object.class))
-                                                .build();
-    
-                                            this.saveDevice(device);
-                                        } else {
-                                            System.out.println("Received message on topic: " + topic + ", device name: " + deviceName);
-                                        }
+                                Device device = this.getDeviceByName(deviceName);
+                                if (device != null) {
+                                    JsonNode dataNode = objectMapper.valueToTree(device.getData());
+
+                                    if (!dataNode.isObject()) {
+                                        dataNode = objectMapper.createObjectNode();
                                     }
+                                    ObjectNode dataObj = (ObjectNode) dataNode;
 
+                                    if (topicArr[1].equals("sensor")) {
+                                        JsonNode sensorNode = dataNode.get("sensors");
+                                        if (sensorNode == null || !sensorNode.isObject()) {
+                                            sensorNode = objectMapper.createObjectNode();
+                                        }
+                                        ObjectNode sensorObj = (ObjectNode) sensorNode;
+
+                                        String sensorName = topicArr[2];
+                                        String sensorData = payloadObj.toString();
+                                        if (StringUtils.isNumeric(sensorData)) {
+                                            int sensorNumData = Integer.parseInt(sensorData);
+                                            sensorObj.put(sensorName, sensorNumData);
+                                        } else {
+                                            sensorObj.put(sensorName, sensorData);
+                                        }
+                                        dataObj.set("sensors", sensorObj);
+
+                                        this.deviceRepository.updateDeviceData(device.getDeviceName(), objectMapper.treeToValue(dataObj, Object.class));
+                                    } else if (topicArr[1].equals("binary_sensor")) {
+                                        JsonNode binarySensorNode = dataNode.get("binarySensors");
+                                        if (binarySensorNode == null || !binarySensorNode.isObject()) {
+                                            binarySensorNode = objectMapper.createObjectNode();
+                                        }
+                                        ObjectNode binarySensorObj = (ObjectNode) binarySensorNode;
+
+                                        String binarySensorName = topicArr[2];
+                                        String binarySensorData = payloadObj.toString();
+                                        if (StringUtils.isNumeric(binarySensorData)) {
+                                            int binarySensorNumData = Integer.parseInt(binarySensorData);
+                                            binarySensorObj.put(binarySensorName, binarySensorNumData);
+                                        } else {
+                                            binarySensorObj.put(binarySensorName, binarySensorData);
+                                        }
+                                        dataObj.set("binarySensors", binarySensorObj);
+
+                                        this.deviceRepository.updateDeviceData(device.getDeviceName(), objectMapper.treeToValue(dataObj, Object.class));
+                                    } else if (topicArr[1].equals("switch")) {
+                                        JsonNode switchNode = dataNode.get("switches");
+                                        if (switchNode == null || !switchNode.isObject()) {
+                                            switchNode = objectMapper.createObjectNode();
+                                        }
+                                        ObjectNode switchObj = (ObjectNode) switchNode;
+
+                                        String switchName = topicArr[2];
+                                        String switchData = payloadObj.toString();
+                                        if (StringUtils.isNumeric(switchData)) {
+                                            int switchNumData = Integer.parseInt(switchData);
+                                            switchObj.put(switchName, switchNumData);
+                                        } else {
+                                            switchObj.put(switchName, switchData);
+                                        }
+                                        dataObj.set("switches", switchObj);
+
+                                        this.deviceRepository.updateDeviceData(device.getDeviceName(), objectMapper.treeToValue(dataObj, Object.class));
+                                    }
                                 }
                             }
+
                         } catch (IllegalArgumentException e) {
                             e.printStackTrace();
                         } catch (Exception e) {
@@ -85,8 +141,41 @@ public class DeviceService {
             .get();
     }
 
-    public void addSubscription(String topic) {
-        this.mqttInbound.addTopic(topic);
+    public void newDeviceConnected(JsonNode payloadJson) throws JsonProcessingException, IllegalArgumentException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode dataJson = payloadJson.get("data");
+
+        if (dataJson != null) {
+            String status = dataJson.get("status").asText();
+            if (status.equals("online")) {
+                String deviceName = payloadJson.get("deviceName").asText();
+                String deviceType = payloadJson.get("deviceType").asText();
+                if (deviceName != null && deviceType != null) {
+                    if (this.getDeviceByName(deviceName) == null) {
+                        Device device = Device.builder()
+                            .deviceName(deviceName)
+                            .deviceType(deviceType)
+                            .data(objectMapper.treeToValue(dataJson, Object.class))
+                            .build();
+
+                        this.saveDevice(device);
+                    }
+                }
+            }
+        }
+    }
+
+    public void addSubscription(String newTopic) {
+        Boolean topicExists = false;
+        for (String topic : mqttInbound.getTopic()) {
+            if (topic.equals(newTopic)) {
+                topicExists = true;
+            }
+        }
+
+        if (!topicExists) {
+            this.mqttInbound.addTopic(newTopic);
+        }
     }
     
     public void removeSubscription(String topic) {
@@ -114,6 +203,22 @@ public class DeviceService {
 
     public Device getDeviceById(String deviceId) {
         return this.deviceRepository.getDeviceById(deviceId);
+    }
+
+    public ResponseEntity<String> getDeviceDataByName(String deviceName) throws JsonProcessingException {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        Device device = this.deviceRepository.getDeviceByName(deviceName);
+        if (device != null && device.getData() != null) {
+            responseBody.put("data", device.getData());
+            responseBody.put("success", true);
+        } else {
+            responseBody.put("success", false);
+        }
+
+        String resp = objectMapper.writeValueAsString(responseBody);
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
     }
 
     public ResponseEntity<String> testMqttAdd(String topic) throws JsonProcessingException {
@@ -162,6 +267,9 @@ public class DeviceService {
             if (device != null) {
                 this.deviceRepository.claimDevice(device.getDeviceName(), device.getDeviceNameFriendly(), device.getItem(), device.getUserId());
                 Device updatedDevice = this.deviceRepository.getDeviceByName(device.getDeviceName());
+
+                this.addSubscription(updatedDevice.getDeviceName() + "/#");
+
                 responseBody.put("id", updatedDevice.getId());
                 responseBody.put("success", true);
             } else {
@@ -203,6 +311,8 @@ public class DeviceService {
     public ResponseEntity<String> deleteDevice(Device device) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();
         ObjectMapper objectMapper = new ObjectMapper();
+
+        this.removeSubscription(device.getDeviceName() + "/#");
 
         this.deviceRepository.deleteById(device.getId());
 

@@ -53,6 +53,9 @@ public class UserController {
                 responseBody.put("user", user);
                 Device[] userDevices = this.deviceService.getDevicesByUserId(userId);
                 if (userDevices != null) {
+                    for (Device device : userDevices) {
+                        this.deviceService.addSubscription(device.getDeviceName() + "/#");
+                    }
                     responseBody.put("devices", userDevices);
                 }
                 responseBody.put("success", true);

@@ -95,6 +95,9 @@ public class AuthService {
                         responseBody.put("refreshToken", refreshToken.get("token"));
                         Device[] userDevices = this.deviceService.getDevicesByUserId(userInfo.getUserId());
                         if (userDevices != null) {
+                            for (Device device : userDevices) {
+                                this.deviceService.addSubscription(device.getDeviceName() + "/#");
+                            }
                             responseBody.put("devices", userDevices);
                         }
                         responseBody.put("success", true);
@@ -133,6 +136,9 @@ public class AuthService {
                 responseBody.put("user", user);
                 Device[] userDevices = this.deviceService.getDevicesByUserId(userId);
                 if (userDevices != null) {
+                    for (Device device : userDevices) {
+                        this.deviceService.addSubscription(device.getDeviceName() + "/#");
+                    }
                     responseBody.put("devices", userDevices);
                 }
                 responseBody.put("success", true);
@@ -146,6 +152,33 @@ public class AuthService {
         } catch (Exception e) {
             System.out.println(e);
             responseBody.put("error", "Unknown Exception");
+            responseBody.put("success", false);
+        }
+
+        String resp = objectMapper.writeValueAsString(responseBody);
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
+    }
+
+    public ResponseEntity<String> handleLogout(String key) throws JsonProcessingException {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            String username = this.jwtUtil.extractUsername(key);
+            String userId = userService.getUserIdFromUsername(username);
+
+            if (userId != null) {
+                for (Device device : this.deviceService.getDevicesByUserId(userId)) {
+                    this.deviceService.removeSubscription(device.getDeviceName() + "/#");
+                }
+                responseBody.put("success", true);
+            }
+        } catch (UsernameNotFoundException e) {
+            // User doesn't exist
+            responseBody.put("error", true);
+            responseBody.put("success", false);
+        } catch (Exception e) {
+            responseBody.put("error", "Server error");
             responseBody.put("success", false);
         }
 
