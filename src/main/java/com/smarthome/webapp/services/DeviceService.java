@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
@@ -13,12 +14,9 @@ import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannel
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
-import org.springframework.util.NumberUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -202,16 +200,50 @@ public class DeviceService {
     }
 
     public Device getDeviceById(String deviceId) {
-        return this.deviceRepository.getDeviceById(deviceId);
+        ObjectId deviceObjectId = new ObjectId(deviceId);
+        return this.deviceRepository.getDeviceById(deviceObjectId);
     }
 
-    public ResponseEntity<String> getDeviceDataByName(String deviceName) throws JsonProcessingException {
+    public ResponseEntity<String> getUserDeviceData(String userId) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();
         ObjectMapper objectMapper = new ObjectMapper();
 
-        Device device = this.deviceRepository.getDeviceByName(deviceName);
-        if (device != null && device.getData() != null) {
-            responseBody.put("data", device.getData());
+        Device[] devices = this.deviceRepository.getDeviceByUserId(userId);
+        if (devices != null) {
+            ObjectNode deviceNode = objectMapper.createObjectNode();
+            for (Device device : devices) {
+                Object deviceData = device.getData();
+                if (deviceData != null) {
+                    JsonNode deviceDataJson = objectMapper.valueToTree(deviceData);
+                    deviceNode.set(device.getId(), deviceDataJson);
+                }
+            }
+
+            responseBody.put("data", deviceNode);
+            responseBody.put("success", true);
+        } else {
+            responseBody.put("success", false);
+        }
+
+        String resp = objectMapper.writeValueAsString(responseBody);
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
+    }
+
+    public ResponseEntity<String> getDeviceDataById(String deviceId) throws JsonProcessingException {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ObjectId deviceObjectId = new ObjectId(deviceId);
+        Device device = this.deviceRepository.getDeviceById(deviceObjectId);
+        if (device != null) {
+            ObjectNode deviceNode = objectMapper.createObjectNode();
+            Object deviceData = device.getData();
+            if (deviceData != null) {
+                JsonNode deviceDataJson = objectMapper.valueToTree(deviceData);
+                deviceNode.set("data", deviceDataJson);
+            }
+
+            responseBody.put("data", deviceNode);
             responseBody.put("success", true);
         } else {
             responseBody.put("success", false);

@@ -1,5 +1,6 @@
 package com.smarthome.webapp.repositories;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.Update;
@@ -25,9 +26,9 @@ public interface DeviceRepository extends MongoRepository<Device, String> {
     @Update("{ '$set': { 'data': ?1 } }")
     void updateDeviceData(String deviceName, Object data);
 
-    @Query("{ 'deviceID' : { $eq: ?0 } }")
-    Device getDeviceById(String deviceId);
+    @Query("{ '_id' : { $eq: ?0 } }")
+    Device getDeviceById(ObjectId deviceId);
 
-    @Query(value="{ 'deviceID' : { $eq: ?0 } }", delete=true)
-    Device deleteByDeviceId(String deviceId);
+    @Query(value="{ '_id' : { $eq: ?0 } }", delete=true)
+    Device deleteByDeviceId(ObjectId deviceId);
 }

@@ -1,5 +1,7 @@
 package com.smarthome.webapp.controllers;
 
+import java.util.HashMap;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,29 @@ public class AuthenticationController {
 
     @Autowired
     AuthService authService;
+
+    @GetMapping("test")
+    public ResponseEntity<HashMap<String,Object>> test() {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+
+        responseBody.put("message", "It Works!!!!");
+        responseBody.put("success", true);
+                
+        return new ResponseEntity<HashMap<String,Object>>(responseBody, HttpStatus.OK);
+    }
+
+    @GetMapping("get/user")
+    public ResponseEntity<String> getUserByToken(@RequestHeader("Authorization") String token) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+        
+        try {
+            resp = this.authService.getUserByToken(token);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return resp;
+    }
 
     @PostMapping("create")
     public ResponseEntity<String> create(@RequestBody String userInfo){

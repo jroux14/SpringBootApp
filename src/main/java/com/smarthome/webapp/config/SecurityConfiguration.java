@@ -18,7 +18,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.smarthome.webapp.services.UserService;
+import com.smarthome.webapp.services.AuthService;
 import com.smarthome.webapp.jwt.JwtRequestFilter;
 
 @Configuration
@@ -26,7 +26,7 @@ import com.smarthome.webapp.jwt.JwtRequestFilter;
 public class SecurityConfiguration {
     
     @Autowired
-    private UserService userService;
+    private AuthService authService;
 
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
@@ -34,7 +34,7 @@ public class SecurityConfiguration {
     @Bean
     public AuthenticationProvider authenticationProvider(){
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userService);
+        provider.setUserDetailsService(authService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smarthome.webapp.interfaces.DeviceInterface;
 import com.smarthome.webapp.objects.Device;
+import com.smarthome.webapp.services.AuthService;
 import com.smarthome.webapp.services.DeviceService;
 
 @RestController
@@ -24,6 +26,9 @@ public class DeviceController implements DeviceInterface {
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private AuthService authService;
 
     @PostMapping("add/topic")
     public ResponseEntity<String> addTopic(@RequestBody String messageData) {
@@ -79,13 +84,29 @@ public class DeviceController implements DeviceInterface {
         return resp;
     }
 
-    @GetMapping("get/data/{deviceName}")
-    public ResponseEntity<String> getDeviceData(@PathVariable String deviceName) {
+    @GetMapping("get/data")
+    public ResponseEntity<String> getDeviceData(@RequestHeader("Authorization") String token) {
         ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
-        ObjectMapper objectMapper = new ObjectMapper();
+
+        String jwt = token.substring(7);
+        String username = this.authService.getJwtSubject(jwt);
 
         try {
-            resp = this.deviceService.getDeviceDataByName(deviceName);
+            String userId = this.authService.getUserIdFromUsername(username);
+            resp = this.deviceService.getUserDeviceData(userId);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return resp;
+    }
+
+    @GetMapping("get/data/{deviceId}")
+    public ResponseEntity<String> getDeviceDataByID(@PathVariable("deviceId") String deviceId) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        try {
+            resp = this.deviceService.getDeviceDataById(deviceId);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }

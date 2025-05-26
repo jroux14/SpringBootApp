@@ -2,10 +2,12 @@ package com.smarthome.webapp.services;
 
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,12 +20,11 @@ import com.smarthome.webapp.jwt.JwtUtil;
 import com.smarthome.webapp.objects.Device;
 import com.smarthome.webapp.objects.UserAccount;
 import com.smarthome.webapp.objects.UserInfo;
+import com.smarthome.webapp.repositories.UserAccountRepository;
+import com.smarthome.webapp.repositories.UserInfoRepository;
 
 @Service
-public class AuthService {
-
-    @Autowired
-    private UserService userService;
+public class AuthService implements UserDetailsService {
 
     @Autowired
     private DeviceService deviceService;
@@ -32,6 +33,49 @@ public class AuthService {
     private JwtUtil jwtUtil;
 
     private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Autowired
+    private UserAccountRepository userAccountRepo;
+
+    @Autowired
+    private UserInfoRepository userInfoRepo;
+
+    @Override
+    public UserAccount loadUserByUsername(String username) throws UsernameNotFoundException {
+        // Retrieves user details by username from the database
+        return userAccountRepo.findByUsername(username);
+    }
+
+    public String getJwtSubject(String jwt) {
+        return this.jwtUtil.extractUsername(jwt);
+    }
+
+    public UserAccount loadUserByRefreshToken(String refreshToken) {
+        return userAccountRepo.findByRefreshToken(refreshToken);
+    }
+
+    public String getUserIdFromUsername(String username) {
+        return this.loadUserByUsername(username).getUserId();
+    }
+
+    public UserInfo getUserInfoByUserId(String userId) {
+        return userInfoRepo.findByUserId(userId);
+    }
+
+    public void saveNewUserAccount(UserAccount user) {
+        userAccountRepo.save(user);
+    }
+
+    public void saveNewUserInfo(UserInfo user) {
+        userInfoRepo.save(user);
+    }
+
+    public void saveRefreshToken(UserAccount user, HashMap<String,Object> tokenData) {
+        user.setRefreshToken(tokenData.get("token").toString());
+        user.setRefreshTokenExp((Date)tokenData.get("exp"));
+
+        userAccountRepo.save(user);
+    }
 
     public ResponseEntity<String> createUser(JsonNode userData) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();
@@ -57,8 +101,8 @@ public class AuthService {
             .phoneNum(userData.get("phoneNum").asText())
             .build();
 
-            this.userService.saveNewUserAccount(user);
-            this.userService.saveNewUserInfo(userInfo);
+            this.saveNewUserAccount(user);
+            this.saveNewUserInfo(userInfo);
 
             responseBody.put("success", true);
         } catch (Exception e) {
@@ -79,15 +123,15 @@ public class AuthService {
             String username = creds.get("username").asText();
             String password = creds.get("password").asText();
 
-            UserAccount userAccount = this.userService.loadUserByUsername(username);
+            UserAccount userAccount = this.loadUserByUsername(username);
             if (userAccount != null) {
                 if (passwordEncoder.matches(password, userAccount.getPassword())) {
                     // Success
                     String token = jwtUtil.generateToken(userAccount);
                     HashMap<String,Object> refreshToken = jwtUtil.generateRefreshToken(userAccount);
-                    this.userService.saveRefreshToken(userAccount, refreshToken);
+                    this.saveRefreshToken(userAccount, refreshToken);
     
-                    UserInfo userInfo = this.userService.getUserInfoByUserId(userAccount.getUserId());
+                    UserInfo userInfo = this.getUserInfoByUserId(userAccount.getUserId());
                     
                     if (userInfo != null) {
                         responseBody.put("user", userInfo);
@@ -130,8 +174,8 @@ public class AuthService {
 
         try {
             String username = this.jwtUtil.extractUsername(key);
-            String userId = userService.getUserIdFromUsername(username);
-            UserInfo user = userService.getUserInfoByUserId(userId);
+            String userId = this.getUserIdFromUsername(username);
+            UserInfo user = this.getUserInfoByUserId(userId);
             if (user != null) {
                 responseBody.put("user", user);
                 Device[] userDevices = this.deviceService.getDevicesByUserId(userId);
@@ -165,7 +209,7 @@ public class AuthService {
 
         try {
             String username = this.jwtUtil.extractUsername(key);
-            String userId = userService.getUserIdFromUsername(username);
+            String userId = this.getUserIdFromUsername(username);
 
             if (userId != null) {
                 for (Device device : this.deviceService.getDevicesByUserId(userId)) {
@@ -186,7 +230,41 @@ public class AuthService {
         return new ResponseEntity<String>(resp, HttpStatus.OK);
     }
 
-    public String getJwtSubject(String jwt) {
-        return this.jwtUtil.extractUsername(jwt);
+    public ResponseEntity<String> getUserByToken(String token) throws JsonProcessingException {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String jwt = token.substring(7);
+        
+        try {
+            String username = this.getJwtSubject(jwt);
+            String userId = this.getUserIdFromUsername(username);
+            UserInfo user = this.getUserInfoByUserId(userId);
+            if (user != null) {
+                responseBody.put("user", user);
+                Device[] userDevices = this.deviceService.getDevicesByUserId(userId);
+                if (userDevices != null) {
+                    for (Device device : userDevices) {
+                        this.deviceService.addSubscription(device.getDeviceName() + "/#");
+                    }
+                    responseBody.put("devices", userDevices);
+                }
+                responseBody.put("success", true);
+            } else {
+                responseBody.put("error", "User not found");
+                responseBody.put("success", false);
+            }
+        } catch (UsernameNotFoundException e) {
+            responseBody.put("error", "User not found");
+            responseBody.put("success", false);
+        } catch (Exception e) {
+            System.out.println(e);
+            responseBody.put("error", "Unknown Exception");
+            responseBody.put("success", false);
+        }
+
+        String resp = objectMapper.writeValueAsString(responseBody);
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
     }
+
 }

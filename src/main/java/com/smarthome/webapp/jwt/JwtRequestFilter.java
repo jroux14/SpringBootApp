@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.smarthome.webapp.objects.UserAccount;
-import com.smarthome.webapp.services.UserService;
+import com.smarthome.webapp.repositories.UserAccountRepository;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -26,7 +26,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private UserService userService;
+    private UserAccountRepository userAccountRepo;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException, java.io.IOException {
@@ -43,7 +43,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
     
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                userDetails = userService.loadUserByUsername(username);
+                userDetails = userAccountRepo.findByUsername(username);
                 if (jwtUtil.validateToken(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                             username, null, new ArrayList<>());
@@ -55,7 +55,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
         } catch (ExpiredJwtException e) {
             System.out.println(e);
-            userDetails = userService.loadUserByRefreshToken(refreshToken);
+            userDetails = userAccountRepo.findByRefreshToken(refreshToken);
             if (userDetails != null) {
                 if (jwtUtil.validateRefreshToken(refreshToken, userDetails)) {
                     String newToken = jwtUtil.generateToken(userDetails);
