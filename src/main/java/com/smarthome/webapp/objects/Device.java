@@ -29,6 +29,7 @@ public class Device {
     private String userId;
     private String deviceName;
     private String deviceNameFriendly;
+    private String roomName;
     private String deviceType;
     private Object data;
     private Object item;

@@ -58,8 +58,9 @@ public class SecurityConfiguration {
         http.csrf(httpSecurityCsrfConfigurer -> httpSecurityCsrfConfigurer.disable())
             .cors().and()
             .authorizeHttpRequests()
-                .requestMatchers("/smarthome/auth/**").permitAll()  // Public endpoints
-                .requestMatchers("/smarthome/user/**").authenticated()  // Secured endpoints
+                .requestMatchers("/smarthome/auth/public/**").permitAll()  // Public endpoints
+                .requestMatchers("/smarthome/auth/private/**").authenticated()  // Secured endpoints
+                .requestMatchers("/smarthome/device/**").authenticated()
                 .anyRequest().authenticated()
                 .and()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()

@@ -1,5 +1,7 @@
 package com.smarthome.webapp.objects;
 
+import java.util.List;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -29,4 +31,5 @@ public class UserInfo {
     private String firstName;
     private String email;
     private String phoneNum;
+    private List<Object> rooms;
 }

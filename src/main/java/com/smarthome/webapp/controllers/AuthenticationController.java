@@ -25,30 +25,7 @@ public class AuthenticationController {
     @Autowired
     AuthService authService;
 
-    @GetMapping("test")
-    public ResponseEntity<HashMap<String,Object>> test() {
-        HashMap<String,Object> responseBody = new HashMap<String,Object>();
-
-        responseBody.put("message", "It Works!!!!");
-        responseBody.put("success", true);
-                
-        return new ResponseEntity<HashMap<String,Object>>(responseBody, HttpStatus.OK);
-    }
-
-    @GetMapping("get/user")
-    public ResponseEntity<String> getUserByToken(@RequestHeader("Authorization") String token) {
-        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
-        
-        try {
-            resp = this.authService.getUserByToken(token);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-
-        return resp;
-    }
-
-    @PostMapping("create")
+    @PostMapping("public/create")
     public ResponseEntity<String> create(@RequestBody String userInfo){
         ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -68,7 +45,7 @@ public class AuthenticationController {
         return resp;
     }
 
-    @PostMapping("login") 
+    @PostMapping("public/login") 
     public ResponseEntity<String> login(@RequestBody String creds) {
         ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -88,7 +65,7 @@ public class AuthenticationController {
         return resp;
     }
 
-    @GetMapping("logout")
+    @GetMapping("private/logout")
     public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
         ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
         String jwt = token.substring(7);
@@ -102,7 +79,7 @@ public class AuthenticationController {
         return resp;
     }
 
-    @GetMapping("verify")
+    @GetMapping("private/verify")
     public ResponseEntity<String> verifyUserKey(@RequestHeader("Authorization") String token) {
         ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
         String jwt = token.substring(7);
@@ -113,6 +90,52 @@ public class AuthenticationController {
             e.printStackTrace();
         }
 
+        return resp;
+    }
+
+    @GetMapping("private/test")
+    public ResponseEntity<HashMap<String,Object>> test() {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+
+        responseBody.put("message", "It Works!!!!");
+        responseBody.put("success", true);
+                
+        return new ResponseEntity<HashMap<String,Object>>(responseBody, HttpStatus.OK);
+    }
+
+    @GetMapping("private/get/user")
+    public ResponseEntity<String> getUserByToken(@RequestHeader("Authorization") String token) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+        
+        try {
+            resp = this.authService.getUserByToken(token);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return resp;
+    }
+
+    @PostMapping("private/add/room")
+    public ResponseEntity<String> addRoom(@RequestHeader("Authorization") String token, @RequestBody String roomInfo) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jwt = token.substring(7);
+
+        try {
+            String username = authService.getJwtSubject(jwt);
+            String userId = authService.getUserIdFromUsername(username);
+            JsonNode roomJson = objectMapper.readValue(roomInfo, JsonNode.class);
+
+            if (roomJson != null) {
+                resp = this.authService.addRoom(userId, roomJson);
+            }
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        
         return resp;
     }
 }

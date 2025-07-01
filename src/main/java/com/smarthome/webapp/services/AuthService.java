@@ -77,6 +77,34 @@ public class AuthService implements UserDetailsService {
         userAccountRepo.save(user);
     }
 
+    public ResponseEntity<String> addRoom(String userId, JsonNode roomInfo) throws JsonProcessingException {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            String roomName = roomInfo.get("name").asText();
+            if(!userInfoRepo.roomExistsForUser(userId, roomName)) {
+                HashMap<String,Object> roomObject = new HashMap<String,Object>();
+                roomObject.put("roomName", roomName);
+                roomObject.put("roomId", UUID.randomUUID().toString());
+
+                userInfoRepo.addRoom(userId, roomObject);
+                responseBody.put("success", true);
+                responseBody.put("room", roomObject);
+            } else {
+                responseBody.put("success", false);
+                responseBody.put("error", "Room already exists");
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+            responseBody.put("error", "Server error");
+            responseBody.put("success", false);
+        }
+
+        String resp = objectMapper.writeValueAsString(responseBody);
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
+    }
+
     public ResponseEntity<String> createUser(JsonNode userData) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -99,6 +127,7 @@ public class AuthService implements UserDetailsService {
             .firstName(userData.get("firstName").asText())
             .email(userData.get("email").asText())
             .phoneNum(userData.get("phoneNum").asText())
+            .rooms(null)
             .build();
 
             this.saveNewUserAccount(user);
