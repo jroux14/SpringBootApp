@@ -21,4 +21,8 @@ public interface UserInfoRepository extends MongoRepository<UserInfo, String> {
     @Query("{ 'userId' : { $eq: ?0 } }")
     @Update("{ '$push': { 'rooms': ?1 } }")
     void addRoom(String userId, Object roomName);
+
+    @Query("{ 'userId' : { $eq: ?0 } }")
+    @Update("{ '$push': { 'dashboard.panels': ?1 } }")
+    void addPanel(String userId, Object newPanel);
 }

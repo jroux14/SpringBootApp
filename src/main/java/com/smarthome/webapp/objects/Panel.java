@@ -21,17 +21,11 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-@Document("user-info")
-public class UserInfo {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private String id;
-
-    private String userId;
-    private String firstName;
-    private String email;
-    private String phoneNum;
+public class Panel {
+    private String panelId;
     
-    private List<Object> rooms;
-    private Dashboard dashboard;
+    private String panelType;
+    private String panelFilterCriteria;
+
+    private Object item;
 }

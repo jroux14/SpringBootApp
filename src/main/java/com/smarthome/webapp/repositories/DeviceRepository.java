@@ -19,8 +19,8 @@ public interface DeviceRepository extends MongoRepository<Device, String> {
     Device getDeviceByName(String deviceId);
 
     @Query("{ 'deviceName' : { $eq: ?0 } }")
-    @Update("{ '$set': { 'deviceNameFriendly': ?1, 'item': ?2, 'userId': ?3 } }")
-    void claimDevice(String deviceName, String friendlyName, Object item, String userId);
+    @Update("{ '$set': { 'deviceNameFriendly': ?1, 'userId': ?2, 'roomId': ?3 } }")
+    void claimDevice(String deviceName, String friendlyName, String userId, String roomId);
 
     @Query("{ 'deviceName' : { $eq: ?0 } }")
     @Update("{ '$set': { 'data': ?1 } }")

@@ -297,10 +297,18 @@ public class DeviceService {
 
         try {
             if (device != null) {
-                this.deviceRepository.claimDevice(device.getDeviceName(), device.getDeviceNameFriendly(), device.getItem(), device.getUserId());
-                Device updatedDevice = this.deviceRepository.getDeviceByName(device.getDeviceName());
+                Device updatedDevice = device;
 
-                this.addSubscription(updatedDevice.getDeviceName() + "/#");
+                // Temporary conditional while developing
+                if (device.getDeviceName().contains("dev-")) {
+                    this.deviceRepository.save(device);
+                } else {
+                    this.deviceRepository.claimDevice(device.getDeviceName(), device.getDeviceNameFriendly(), device.getUserId(), device.getRoomId());
+                    updatedDevice = this.deviceRepository.getDeviceByName(device.getDeviceName());
+    
+                    this.addSubscription(updatedDevice.getDeviceName() + "/#");
+                }
+                
 
                 responseBody.put("id", updatedDevice.getId());
                 responseBody.put("success", true);
@@ -319,26 +327,26 @@ public class DeviceService {
     }
 
     /* TODO: Flesh this method out some more */
-    public ResponseEntity<String> updateDevice(Device device) throws JsonProcessingException {
-        HashMap<String,Object> responseBody = new HashMap<String,Object>();
-        ObjectMapper objectMapper = new ObjectMapper();
+    // public ResponseEntity<String> updateDevice(Device device) throws JsonProcessingException {
+    //     HashMap<String,Object> responseBody = new HashMap<String,Object>();
+    //     ObjectMapper objectMapper = new ObjectMapper();
 
-        Optional<Device> existingDeviceOpt = deviceRepository.findById(device.getId());
+    //     Optional<Device> existingDeviceOpt = deviceRepository.findById(device.getId());
 
-        if (existingDeviceOpt.isPresent()) {
-            Device existingDevice = existingDeviceOpt.get();
-            existingDevice.setItem(device.getItem());
-            this.deviceRepository.save(existingDevice);
+    //     if (existingDeviceOpt.isPresent()) {
+    //         Device existingDevice = existingDeviceOpt.get();
+    //         existingDevice.setItem(device.getItem());
+    //         this.deviceRepository.save(existingDevice);
 
-            responseBody.put("success", true);
-        } else {
-            responseBody.put("success", false);
-        }
+    //         responseBody.put("success", true);
+    //     } else {
+    //         responseBody.put("success", false);
+    //     }
 
-        String resp = objectMapper.writeValueAsString(responseBody);
+    //     String resp = objectMapper.writeValueAsString(responseBody);
 
-        return new ResponseEntity<String>(resp, HttpStatus.OK);
-    }
+    //     return new ResponseEntity<String>(resp, HttpStatus.OK);
+    // }
 
     public ResponseEntity<String> deleteDevice(Device device) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();

@@ -16,6 +16,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smarthome.webapp.objects.Panel;
 import com.smarthome.webapp.services.AuthService;
 
 @RestController
@@ -129,6 +130,30 @@ public class AuthenticationController {
 
             if (roomJson != null) {
                 resp = this.authService.addRoom(userId, roomJson);
+            }
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        
+        return resp;
+    }
+
+    @PostMapping("private/add/panel")
+    public ResponseEntity<String> addDashboardPanel(@RequestHeader("Authorization") String token, @RequestBody String panelInfo) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jwt = token.substring(7);
+
+        try {
+            String username = authService.getJwtSubject(jwt);
+            String userId = authService.getUserIdFromUsername(username);
+            JsonNode panelJson = objectMapper.readValue(panelInfo, JsonNode.class);
+            Panel panel = objectMapper.treeToValue(panelJson, Panel.class);
+
+            if (panelJson != null) {
+                resp = this.authService.addPanel(userId, panel);
             }
         } catch (JsonMappingException e) {
             e.printStackTrace();

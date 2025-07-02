@@ -2,6 +2,7 @@ package com.smarthome.webapp.services;
 
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.Collections;
 import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smarthome.webapp.jwt.JwtUtil;
+import com.smarthome.webapp.objects.Dashboard;
 import com.smarthome.webapp.objects.Device;
+import com.smarthome.webapp.objects.Panel;
 import com.smarthome.webapp.objects.UserAccount;
 import com.smarthome.webapp.objects.UserInfo;
 import com.smarthome.webapp.repositories.UserAccountRepository;
@@ -105,6 +108,28 @@ public class AuthService implements UserDetailsService {
         return new ResponseEntity<String>(resp, HttpStatus.OK);
     }
 
+    public ResponseEntity<String> addPanel(String userId, Panel panel) throws JsonProcessingException {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            String panelId = UUID.randomUUID().toString();
+
+            panel.setPanelId(panelId);
+
+            userInfoRepo.addPanel(userId, panel);
+            responseBody.put("success", true);
+            responseBody.put("panel", panel);
+        } catch (Exception e) {
+            System.out.println(e);
+            responseBody.put("error", "Server error");
+            responseBody.put("success", false);
+        }
+
+        String resp = objectMapper.writeValueAsString(responseBody);
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
+    }
+
     public ResponseEntity<String> createUser(JsonNode userData) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -113,21 +138,28 @@ public class AuthService implements UserDetailsService {
             String username = userData.get("username").asText();
             String password = userData.get("password").asText();
 
-            String userID = UUID.randomUUID().toString();
+            String userId = UUID.randomUUID().toString();
+            String dashboardId = UUID.randomUUID().toString();
+
+            Dashboard startingDashboard = Dashboard.builder()
+            .dashboardId(dashboardId)
+            .panels(Collections.emptyList())
+            .build();
 
             UserAccount user = UserAccount.builder()
-            .userId(userID)
+            .userId(userId)
             .username(username)
             .password(passwordEncoder.encode(password))
             .authorities("defaultUser")
             .build();
 
             UserInfo userInfo = UserInfo.builder()
-            .userId(userID)
+            .userId(userId)
             .firstName(userData.get("firstName").asText())
             .email(userData.get("email").asText())
-            .phoneNum(userData.get("phoneNum").asText())
-            .rooms(null)
+            .phoneNum(userData.get("phone").asText())
+            .rooms(Collections.emptyList())
+            .dashboard(startingDashboard)
             .build();
 
             this.saveNewUserAccount(user);
