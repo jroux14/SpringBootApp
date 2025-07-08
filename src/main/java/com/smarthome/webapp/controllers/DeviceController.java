@@ -155,25 +155,4 @@ public class DeviceController implements DeviceInterface {
         
         return resp;
     }
-
-
-    // @PostMapping("update/position")
-    // public ResponseEntity<String> updateDevicePosition(@RequestBody String deviceStr) {
-    //     ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
-    //     ObjectMapper objectMapper = new ObjectMapper();
-    //     try {
-    //         JsonNode deviceJson = objectMapper.readValue(deviceStr, JsonNode.class);
-    //         Device device = objectMapper.treeToValue(deviceJson, Device.class);
-
-    //         if (device != null) {
-    //             resp = this.deviceService.updateDevice(device);
-    //         }
-    //     } catch (JsonMappingException e) {
-    //         e.printStackTrace();
-    //     } catch (JsonProcessingException e) {
-    //         e.printStackTrace();
-    //     }
-        
-    //     return resp;
-    // }
 }

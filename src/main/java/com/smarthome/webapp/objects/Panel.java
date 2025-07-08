@@ -27,5 +27,5 @@ public class Panel {
     private String panelType;
     private String panelFilterCriteria;
 
-    private Object item;
+    private Object data;
 }

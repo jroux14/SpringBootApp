@@ -328,4 +328,59 @@ public class AuthService implements UserDetailsService {
         return new ResponseEntity<String>(resp, HttpStatus.OK);
     }
 
+    public ResponseEntity<String> updatePanel(String userId, Panel panel) throws JsonProcessingException {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        UserInfo user = this.userInfoRepo.findByUserId(userId);
+
+        if (user == null) {
+            responseBody.put("success", false);
+            responseBody.put("error", "User not found");
+        } else {
+            Dashboard dashboard = user.getDashboard();
+            if (dashboard != null && dashboard.getPanels() != null) {
+                dashboard.getPanels().forEach(currentPanel -> {
+                    if (currentPanel.getPanelId().equals(panel.getPanelId())) {
+                        currentPanel.setData(panel.getData());
+                    }
+                });
+                this.userInfoRepo.save(user);
+            } else {
+                responseBody.put("success", false);
+                responseBody.put("error", "Dashboard or panel not found");
+            }
+
+            responseBody.put("success", true);
+        }
+
+        String resp = objectMapper.writeValueAsString(responseBody);
+
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
+    }
+
+    public ResponseEntity<String> deletePanel(String userId, Panel panel) throws JsonProcessingException {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        UserInfo user = this.userInfoRepo.findByUserId(userId);
+        if (user == null) {
+            responseBody.put("success", false);
+            responseBody.put("error", "User not found");
+        } else {
+            Dashboard dashboard = user.getDashboard();
+            if (dashboard != null && dashboard.getPanels() != null) {
+                dashboard.getPanels().removeIf(oldPanel -> oldPanel.getPanelId().equals(panel.getPanelId()));
+                userInfoRepo.save(user);
+                responseBody.put("success", true);
+            } else {
+                responseBody.put("success", false);
+                responseBody.put("error", "Dashboard or panel not found");
+            }
+        }
+
+        String resp = objectMapper.writeValueAsString(responseBody);
+
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
+    }
 }

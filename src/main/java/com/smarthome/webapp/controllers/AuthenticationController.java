@@ -163,4 +163,52 @@ public class AuthenticationController {
         
         return resp;
     }
+
+    @PostMapping("delete/panel")
+    public ResponseEntity<String> deletePanel(@RequestHeader("Authorization") String token, @RequestBody String panelStr) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jwt = token.substring(7);
+
+        try {
+            String username = authService.getJwtSubject(jwt);
+            String userId = authService.getUserIdFromUsername(username);
+            JsonNode panelJson = objectMapper.readValue(panelStr, JsonNode.class);
+            Panel panel = objectMapper.treeToValue(panelJson, Panel.class);
+
+            if (panel != null) {
+                resp = this.authService.deletePanel(userId, panel);
+            }
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        
+        return resp;
+    }
+
+    @PostMapping("update/panel")
+    public ResponseEntity<String> updatePanelPosition(@RequestHeader("Authorization") String token, @RequestBody String panelStr) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jwt = token.substring(7);
+
+        try {
+            String username = authService.getJwtSubject(jwt);
+            String userId = authService.getUserIdFromUsername(username);
+            JsonNode panelJson = objectMapper.readValue(panelStr, JsonNode.class);
+            Panel panel = objectMapper.treeToValue(panelJson, Panel.class);
+
+            if (panel != null) {
+                resp = this.authService.updatePanel(userId, panel);
+            }
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        
+        return resp;
+    }
 }
