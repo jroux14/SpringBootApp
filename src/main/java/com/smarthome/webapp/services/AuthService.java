@@ -328,7 +328,7 @@ public class AuthService implements UserDetailsService {
         return new ResponseEntity<String>(resp, HttpStatus.OK);
     }
 
-    public ResponseEntity<String> updatePanel(String userId, Panel panel) throws JsonProcessingException {
+    public ResponseEntity<String> updatePanelData(String userId, Panel panel) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();
         ObjectMapper objectMapper = new ObjectMapper();
 

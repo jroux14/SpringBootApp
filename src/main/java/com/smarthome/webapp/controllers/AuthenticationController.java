@@ -188,8 +188,8 @@ public class AuthenticationController {
         return resp;
     }
 
-    @PostMapping("update/panel")
-    public ResponseEntity<String> updatePanelPosition(@RequestHeader("Authorization") String token, @RequestBody String panelStr) {
+    @PostMapping("update/panel/data")
+    public ResponseEntity<String> updatePanelData(@RequestHeader("Authorization") String token, @RequestBody String panelStr) {
         ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
         ObjectMapper objectMapper = new ObjectMapper();
         String jwt = token.substring(7);
@@ -201,7 +201,7 @@ public class AuthenticationController {
             Panel panel = objectMapper.treeToValue(panelJson, Panel.class);
 
             if (panel != null) {
-                resp = this.authService.updatePanel(userId, panel);
+                resp = this.authService.updatePanelData(userId, panel);
             }
         } catch (JsonMappingException e) {
             e.printStackTrace();
