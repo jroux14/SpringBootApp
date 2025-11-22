@@ -1,6 +1,8 @@
 package com.smarthome.webapp.services;
 
+import java.time.Instant;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +23,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.smarthome.webapp.objects.Device;
+import com.smarthome.webapp.objects.DeviceReading;
+import com.smarthome.webapp.repositories.DeviceReadingRepository;
 import com.smarthome.webapp.repositories.DeviceRepository;
 
 @Service
@@ -28,6 +32,9 @@ public class DeviceService {
 
     @Autowired
     private DeviceRepository deviceRepository;
+
+    @Autowired
+    private DeviceReadingRepository deviceReadingRepository;
 
     @Autowired
     private MqttPahoMessageDrivenChannelAdapter mqttInbound;
@@ -69,43 +76,42 @@ public class DeviceService {
                                         dataNode = objectMapper.createObjectNode();
                                     }
                                     ObjectNode dataObj = (ObjectNode) dataNode;
-
                                     if (topicArr[1].equals("sensor")) {
                                         JsonNode sensorNode = dataNode.get("sensors");
                                         if (sensorNode == null || !sensorNode.isObject()) {
                                             sensorNode = objectMapper.createObjectNode();
                                         }
                                         ObjectNode sensorObj = (ObjectNode) sensorNode;
-
                                         String sensorName = topicArr[2];
                                         String sensorData = payloadObj.toString();
-                                        if (StringUtils.isNumeric(sensorData)) {
-                                            int sensorNumData = Integer.parseInt(sensorData);
-                                            sensorObj.put(sensorName, sensorNumData);
-                                        } else {
-                                            sensorObj.put(sensorName, sensorData);
-                                        }
-                                        dataObj.set("sensors", sensorObj);
+                                        Object value = StringUtils.isNumeric(sensorData) ? Integer.parseInt(sensorData) : sensorData;
+                                        JsonNode node = objectMapper.convertValue(value, JsonNode.class);
 
+                                        // Update live state
+                                        sensorObj.set(sensorName, node);
+                                        dataObj.set("sensors", sensorObj);
                                         this.deviceRepository.updateDeviceData(device.getDeviceName(), objectMapper.treeToValue(dataObj, Object.class));
+                                    
+                                        // Store historical data
+                                        saveReading(deviceName, "sensor", sensorName, value);
                                     } else if (topicArr[1].equals("binary_sensor")) {
                                         JsonNode binarySensorNode = dataNode.get("binarySensors");
                                         if (binarySensorNode == null || !binarySensorNode.isObject()) {
                                             binarySensorNode = objectMapper.createObjectNode();
                                         }
                                         ObjectNode binarySensorObj = (ObjectNode) binarySensorNode;
-
                                         String binarySensorName = topicArr[2];
                                         String binarySensorData = payloadObj.toString();
-                                        if (StringUtils.isNumeric(binarySensorData)) {
-                                            int binarySensorNumData = Integer.parseInt(binarySensorData);
-                                            binarySensorObj.put(binarySensorName, binarySensorNumData);
-                                        } else {
-                                            binarySensorObj.put(binarySensorName, binarySensorData);
-                                        }
-                                        dataObj.set("binarySensors", binarySensorObj);
+                                        Object value = StringUtils.isNumeric(binarySensorData) ? Integer.parseInt(binarySensorData) : binarySensorData;
+                                        JsonNode node = objectMapper.convertValue(value, JsonNode.class);
 
+                                        // Update live state
+                                        binarySensorObj.set(binarySensorName, node);
+                                        dataObj.set("binarySensors", binarySensorObj);
                                         this.deviceRepository.updateDeviceData(device.getDeviceName(), objectMapper.treeToValue(dataObj, Object.class));
+                                    
+                                        // Store historical data (Don't need right now since we are just tracking ON/OFF state of the switch)
+                                        // saveReading(deviceName, "binary_sensor", binarySensorName, value);
                                     } else if (topicArr[1].equals("switch")) {
                                         JsonNode switchNode = dataNode.get("switches");
                                         if (switchNode == null || !switchNode.isObject()) {
@@ -137,6 +143,21 @@ public class DeviceService {
                 }
             })
             .get();
+    }
+
+    private void saveReading(String deviceName, String type, String name, Object value) {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("device", deviceName);
+        metadata.put("type", type);
+        metadata.put("name", name);
+    
+        DeviceReading reading = new DeviceReading(
+            Instant.now(),
+            metadata,
+            value
+        );
+    
+        deviceReadingRepository.save(reading);
     }
 
     public void newDeviceConnected(JsonNode payloadJson) throws JsonProcessingException, IllegalArgumentException {

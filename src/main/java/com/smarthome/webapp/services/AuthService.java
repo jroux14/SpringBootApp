@@ -1,6 +1,7 @@
 package com.smarthome.webapp.services;
 
 import java.util.HashMap;
+import java.util.ListIterator;
 import java.util.UUID;
 import java.util.Collections;
 import java.util.Date;
@@ -328,11 +329,12 @@ public class AuthService implements UserDetailsService {
         return new ResponseEntity<String>(resp, HttpStatus.OK);
     }
 
-    public ResponseEntity<String> updatePanelData(String userId, Panel panel) throws JsonProcessingException {
+    public ResponseEntity<String> updatePanel(String userId, Panel panel) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();
         ObjectMapper objectMapper = new ObjectMapper();
 
         UserInfo user = this.userInfoRepo.findByUserId(userId);
+        boolean updated = false;
 
         if (user == null) {
             responseBody.put("success", false);
@@ -340,18 +342,27 @@ public class AuthService implements UserDetailsService {
         } else {
             Dashboard dashboard = user.getDashboard();
             if (dashboard != null && dashboard.getPanels() != null) {
-                dashboard.getPanels().forEach(currentPanel -> {
-                    if (currentPanel.getPanelId().equals(panel.getPanelId())) {
-                        currentPanel.setData(panel.getData());
+                ListIterator<Panel> iterator = dashboard.getPanels().listIterator();
+                while (iterator.hasNext()) {
+                    Panel current = iterator.next();
+                    if (current.getPanelId().equals(panel.getPanelId())) {
+                        iterator.set(panel);
+                        updated = true;
+                        break;
                     }
-                });
+                }
                 this.userInfoRepo.save(user);
             } else {
                 responseBody.put("success", false);
-                responseBody.put("error", "Dashboard or panel not found");
+                responseBody.put("error", "Dashboard or panels not found");
             }
 
-            responseBody.put("success", true);
+            if(updated) {
+                responseBody.put("success", true);
+            } else {
+                responseBody.put("success", false);
+                responseBody.put("error", "Panel not found");
+            }
         }
 
         String resp = objectMapper.writeValueAsString(responseBody);

@@ -1,13 +1,9 @@
 package com.smarthome.webapp.repositories;
 
-import java.util.List;
-
-import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.Update;
 
-import com.smarthome.webapp.objects.Panel;
 import com.smarthome.webapp.objects.UserInfo;
 
 public interface UserInfoRepository extends MongoRepository<UserInfo, String> {

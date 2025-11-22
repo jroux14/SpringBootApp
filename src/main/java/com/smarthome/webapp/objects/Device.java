@@ -32,5 +32,4 @@ public class Device {
     private String roomId;
     private String deviceType;
     private Object data;
-
 }
