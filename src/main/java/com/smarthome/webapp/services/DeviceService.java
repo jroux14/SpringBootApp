@@ -3,7 +3,6 @@ package com.smarthome.webapp.services;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
@@ -84,7 +83,14 @@ public class DeviceService {
                                         ObjectNode sensorObj = (ObjectNode) sensorNode;
                                         String sensorName = topicArr[2];
                                         String sensorData = payloadObj.toString();
-                                        Object value = StringUtils.isNumeric(sensorData) ? Integer.parseInt(sensorData) : sensorData;
+                                        sensorData = sensorData.trim();
+                                        Object value;
+                                        try {
+                                            value = Double.valueOf(sensorData);
+                                        } catch (NumberFormatException e) {
+                                            value = sensorData;
+                                        }
+                                        
                                         JsonNode node = objectMapper.convertValue(value, JsonNode.class);
 
                                         // Update live state
@@ -102,7 +108,13 @@ public class DeviceService {
                                         ObjectNode binarySensorObj = (ObjectNode) binarySensorNode;
                                         String binarySensorName = topicArr[2];
                                         String binarySensorData = payloadObj.toString();
-                                        Object value = StringUtils.isNumeric(binarySensorData) ? Integer.parseInt(binarySensorData) : binarySensorData;
+                                        binarySensorData = binarySensorData.trim();
+                                        Object value;
+                                        try {
+                                            value = Double.valueOf(binarySensorData);
+                                        } catch (NumberFormatException e) {
+                                            value = binarySensorData;
+                                        }
                                         JsonNode node = objectMapper.convertValue(value, JsonNode.class);
 
                                         // Update live state
