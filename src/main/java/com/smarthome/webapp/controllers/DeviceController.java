@@ -1,5 +1,7 @@
 package com.smarthome.webapp.controllers;
 
+import java.time.Instant;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -102,11 +105,26 @@ public class DeviceController implements DeviceInterface {
     }
 
     @GetMapping("get/data/{deviceId}")
-    public ResponseEntity<String> getDeviceDataByID(@PathVariable("deviceId") String deviceId) {
+    public ResponseEntity<String> getDeviceDataByDeviceName(@PathVariable("deviceId") String deviceId) {
         ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
 
         try {
             resp = this.deviceService.getDeviceDataById(deviceId);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return resp;
+    }
+
+    @GetMapping("/get/sensor/data/{deviceId}")
+    public ResponseEntity<String> getSensorReadingsByDeviceId(@PathVariable("deviceId") String deviceId, @RequestParam String start, @RequestParam String end) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        try {
+            Instant startTime = Instant.parse(start);
+            Instant endTime = Instant.parse(end);
+            resp = this.deviceService.getSensorReadingsByDeviceId(deviceId, startTime, endTime);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }

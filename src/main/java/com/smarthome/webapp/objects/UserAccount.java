@@ -5,10 +5,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,7 +17,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -33,7 +28,6 @@ public class UserAccount implements UserDetails{
     private static final String AUTHORITIES_DELIMITER = "::";
     
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private String id;
 
     private String userId;

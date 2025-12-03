@@ -23,7 +23,7 @@ public class AggregationService {
     }
 
     // Scheduled to run daily at 8:07 PM
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(cron = "0 0 20 * * ?")
     public void aggregateOldData() {
         System.out.println("AGGREGATION SERVICE STARTED AT: " + new Date());
         aggregateHourly();
@@ -33,7 +33,8 @@ public class AggregationService {
 
     /** Aggregate raw entries older than 1 year into hourly summaries */
     public void aggregateHourly() {
-        ZonedDateTime cutoffTime = ZonedDateTime.now().minusYears(1);
+        // ZonedDateTime cutoffTime = ZonedDateTime.now().minusYears(1);
+        ZonedDateTime cutoffTime = ZonedDateTime.now().minusMinutes(5);
         Date cutoffDate = Date.from(cutoffTime.toInstant());
 
         Aggregation aggregation = Aggregation.newAggregation(

@@ -2,6 +2,7 @@ package com.smarthome.webapp.services;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -20,9 +21,12 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.smarthome.webapp.objects.Device;
 import com.smarthome.webapp.objects.DeviceReading;
+import com.smarthome.webapp.objects.DeviceReadingMetadata;
 import com.smarthome.webapp.repositories.DeviceReadingRepository;
 import com.smarthome.webapp.repositories.DeviceRepository;
 
@@ -96,10 +100,12 @@ public class DeviceService {
                                         // Update live state
                                         sensorObj.set(sensorName, node);
                                         dataObj.set("sensors", sensorObj);
-                                        this.deviceRepository.updateDeviceData(device.getDeviceName(), objectMapper.treeToValue(dataObj, Object.class));
+
+                                        ObjectId deviceId = new ObjectId(device.getId());
+                                        this.deviceRepository.updateDeviceData(deviceId, objectMapper.treeToValue(dataObj, Object.class));
                                     
                                         // Store historical data
-                                        saveReading(deviceName, "sensor", sensorName, value);
+                                        saveReading(device.getId(), "sensor", sensorName, value);
                                     } else if (topicArr[1].equals("binary_sensor")) {
                                         JsonNode binarySensorNode = dataNode.get("binarySensors");
                                         if (binarySensorNode == null || !binarySensorNode.isObject()) {
@@ -120,10 +126,9 @@ public class DeviceService {
                                         // Update live state
                                         binarySensorObj.set(binarySensorName, node);
                                         dataObj.set("binarySensors", binarySensorObj);
-                                        this.deviceRepository.updateDeviceData(device.getDeviceName(), objectMapper.treeToValue(dataObj, Object.class));
-                                    
-                                        // Store historical data (Don't need right now since we are just tracking ON/OFF state of the switch)
-                                        // saveReading(deviceName, "binary_sensor", binarySensorName, value);
+
+                                        ObjectId deviceId = new ObjectId(device.getId());
+                                        this.deviceRepository.updateDeviceData(deviceId, objectMapper.treeToValue(dataObj, Object.class));                                    
                                     } else if (topicArr[1].equals("switch")) {
                                         JsonNode switchNode = dataNode.get("switches");
                                         if (switchNode == null || !switchNode.isObject()) {
@@ -141,7 +146,8 @@ public class DeviceService {
                                         }
                                         dataObj.set("switches", switchObj);
 
-                                        this.deviceRepository.updateDeviceData(device.getDeviceName(), objectMapper.treeToValue(dataObj, Object.class));
+                                        ObjectId deviceId = new ObjectId(device.getId());
+                                        this.deviceRepository.updateDeviceData(deviceId, objectMapper.treeToValue(dataObj, Object.class));
                                     }
                                 }
                             }
@@ -157,17 +163,9 @@ public class DeviceService {
             .get();
     }
 
-    private void saveReading(String deviceName, String type, String name, Object value) {
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("device", deviceName);
-        metadata.put("type", type);
-        metadata.put("name", name);
-    
-        DeviceReading reading = new DeviceReading(
-            Instant.now(),
-            metadata,
-            value
-        );
+    private void saveReading(String deviceId, String type, String name, Object value) {   
+        DeviceReadingMetadata metadata = new DeviceReadingMetadata(deviceId, name, type); 
+        DeviceReading reading = new DeviceReading(Instant.now(), metadata, value);
     
         deviceReadingRepository.save(reading);
     }
@@ -232,9 +230,9 @@ public class DeviceService {
         return this.deviceRepository.getDeviceByUserId(userId);
     }
 
-    public Device getDeviceById(String deviceId) {
-        ObjectId deviceObjectId = new ObjectId(deviceId);
-        return this.deviceRepository.getDeviceById(deviceObjectId);
+    public Device getDeviceById(String idStr) {
+        ObjectId deviceId = new ObjectId(idStr);
+        return this.deviceRepository.getDeviceById(deviceId);
     }
 
     public ResponseEntity<String> getUserDeviceData(String userId) throws JsonProcessingException {
@@ -262,12 +260,12 @@ public class DeviceService {
         return new ResponseEntity<String>(resp, HttpStatus.OK);
     }
 
-    public ResponseEntity<String> getDeviceDataById(String deviceId) throws JsonProcessingException {
+    public ResponseEntity<String> getDeviceDataById(String idStr) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();
         ObjectMapper objectMapper = new ObjectMapper();
 
-        ObjectId deviceObjectId = new ObjectId(deviceId);
-        Device device = this.deviceRepository.getDeviceById(deviceObjectId);
+        ObjectId deviceId = new ObjectId(idStr);
+        Device device = this.deviceRepository.getDeviceById(deviceId);
         if (device != null) {
             ObjectNode deviceNode = objectMapper.createObjectNode();
             Object deviceData = device.getData();
@@ -343,13 +341,13 @@ public class DeviceService {
                 }
                 
 
-                responseBody.put("id", updatedDevice.getId());
+                // responseBody.put("id", updatedDevice.getId());
                 responseBody.put("success", true);
             } else {
                 responseBody.put("error", "No Device");
                 responseBody.put("success", false);
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             System.out.println(e);
             responseBody.put("error", "Unkown server error");
             responseBody.put("success", false);
@@ -359,27 +357,31 @@ public class DeviceService {
         return new ResponseEntity<String>(resp, HttpStatus.OK);
     }
 
-    /* TODO: Flesh this method out some more */
-    // public ResponseEntity<String> updateDevice(Device device) throws JsonProcessingException {
-    //     HashMap<String,Object> responseBody = new HashMap<String,Object>();
-    //     ObjectMapper objectMapper = new ObjectMapper();
+    public ResponseEntity<String> getSensorReadingsByDeviceId(String deviceId, Instant start, Instant end) throws JsonProcessingException {
+        HashMap<String,Object> responseBody = new HashMap<String,Object>();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        
+        try {
+            List<DeviceReading> deviceReadings = deviceReadingRepository.findReadingsByDeviceId(deviceId, start, end);
 
-    //     Optional<Device> existingDeviceOpt = deviceRepository.findById(device.getId());
+            if (deviceReadings != null) {
+                responseBody.put("data", deviceReadings);
+                responseBody.put("success", true);
+            } else {
+                responseBody.put("error", "No sensor data");
+                responseBody.put("success", false);
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+            responseBody.put("error", "Failed to fetch sensor data");
+            responseBody.put("success", false);
+        }
 
-    //     if (existingDeviceOpt.isPresent()) {
-    //         Device existingDevice = existingDeviceOpt.get();
-    //         existingDevice.setItem(device.getItem());
-    //         this.deviceRepository.save(existingDevice);
-
-    //         responseBody.put("success", true);
-    //     } else {
-    //         responseBody.put("success", false);
-    //     }
-
-    //     String resp = objectMapper.writeValueAsString(responseBody);
-
-    //     return new ResponseEntity<String>(resp, HttpStatus.OK);
-    // }
+        String resp = objectMapper.writeValueAsString(responseBody);
+        return new ResponseEntity<String>(resp, HttpStatus.OK);
+    }
 
     public ResponseEntity<String> deleteDevice(Device device) throws JsonProcessingException {
         HashMap<String,Object> responseBody = new HashMap<String,Object>();

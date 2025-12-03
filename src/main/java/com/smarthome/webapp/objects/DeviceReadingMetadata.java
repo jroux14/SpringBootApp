@@ -11,11 +11,9 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class Panel {
-    private String panelId;
-    
-    private String panelType;
-    private String panelFilterCriteria;
-
-    private Object data;
+public class DeviceReadingMetadata {
+    private String device;
+    private String name;
+    private String type;
 }
+

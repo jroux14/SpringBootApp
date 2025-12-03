@@ -16,19 +16,19 @@ public interface DeviceRepository extends MongoRepository<Device, String> {
     Device[] getUnclaimedDevices();
 
     @Query("{ 'deviceName' : { $eq: ?0 } }")
-    Device getDeviceByName(String deviceId);
+    Device getDeviceByName(String deviceName);
+
+    @Query("{ '_id' : { $eq: ?0 } }")
+    Device getDeviceById(ObjectId id);
 
     @Query("{ 'deviceName' : { $eq: ?0 } }")
     @Update("{ '$set': { 'deviceNameFriendly': ?1, 'userId': ?2, 'roomId': ?3 } }")
     void claimDevice(String deviceName, String friendlyName, String userId, String roomId);
 
-    @Query("{ 'deviceName' : { $eq: ?0 } }")
-    @Update("{ '$set': { 'data': ?1 } }")
-    void updateDeviceData(String deviceName, Object data);
-
     @Query("{ '_id' : { $eq: ?0 } }")
-    Device getDeviceById(ObjectId deviceId);
+    @Update("{ '$set': { 'data': ?1 } }")
+    void updateDeviceData(ObjectId deviceId, Object data);
 
     @Query(value="{ '_id' : { $eq: ?0 } }", delete=true)
-    Device deleteByDeviceId(ObjectId deviceId);
+    Device deleteById(ObjectId id);
 }
