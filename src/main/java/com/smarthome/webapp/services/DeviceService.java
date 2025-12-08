@@ -1,6 +1,7 @@
 package com.smarthome.webapp.services;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ import com.smarthome.webapp.objects.DeviceReading;
 import com.smarthome.webapp.objects.DeviceReadingMetadata;
 import com.smarthome.webapp.repositories.DeviceReadingRepository;
 import com.smarthome.webapp.repositories.DeviceRepository;
+import com.smarthome.webapp.DeviceConstants;
 
 @Service
 public class DeviceService {
@@ -80,32 +82,34 @@ public class DeviceService {
                                     }
                                     ObjectNode dataObj = (ObjectNode) dataNode;
                                     if (topicArr[1].equals("sensor")) {
-                                        JsonNode sensorNode = dataNode.get("sensors");
-                                        if (sensorNode == null || !sensorNode.isObject()) {
-                                            sensorNode = objectMapper.createObjectNode();
-                                        }
-                                        ObjectNode sensorObj = (ObjectNode) sensorNode;
-                                        String sensorName = topicArr[2];
-                                        String sensorData = payloadObj.toString();
-                                        sensorData = sensorData.trim();
-                                        Object value;
-                                        try {
-                                            value = Double.valueOf(sensorData);
-                                        } catch (NumberFormatException e) {
-                                            value = sensorData;
-                                        }
+                                        if (Arrays.asList(DeviceConstants.VALID_OUTLET_SENSORS).contains(topicArr[2])) {
+                                            JsonNode sensorNode = dataNode.get("sensors");
+                                            if (sensorNode == null || !sensorNode.isObject()) {
+                                                sensorNode = objectMapper.createObjectNode();
+                                            }
+                                            ObjectNode sensorObj = (ObjectNode) sensorNode;
+                                            String sensorName = topicArr[2];
+                                            String sensorData = payloadObj.toString();
+                                            sensorData = sensorData.trim();
+                                            Object value;
+                                            try {
+                                                value = Double.valueOf(sensorData);
+                                            } catch (NumberFormatException e) {
+                                                value = sensorData;
+                                            }
+                                            
+                                            JsonNode node = objectMapper.convertValue(value, JsonNode.class);
+    
+                                            // Update live state
+                                            sensorObj.set(sensorName, node);
+                                            dataObj.set("sensors", sensorObj);
+    
+                                            ObjectId deviceId = new ObjectId(device.getId());
+                                            this.deviceRepository.updateDeviceData(deviceId, objectMapper.treeToValue(dataObj, Object.class));
                                         
-                                        JsonNode node = objectMapper.convertValue(value, JsonNode.class);
-
-                                        // Update live state
-                                        sensorObj.set(sensorName, node);
-                                        dataObj.set("sensors", sensorObj);
-
-                                        ObjectId deviceId = new ObjectId(device.getId());
-                                        this.deviceRepository.updateDeviceData(deviceId, objectMapper.treeToValue(dataObj, Object.class));
-                                    
-                                        // Store historical data
-                                        saveReading(device.getId(), "sensor", sensorName, value);
+                                            // Store historical data
+                                            saveReading(device.getId(), "sensor", sensorName, value);
+                                        }
                                     } else if (topicArr[1].equals("binary_sensor")) {
                                         JsonNode binarySensorNode = dataNode.get("binarySensors");
                                         if (binarySensorNode == null || !binarySensorNode.isObject()) {
@@ -340,8 +344,7 @@ public class DeviceService {
                     this.addSubscription(updatedDevice.getDeviceName() + "/#");
                 }
                 
-
-                // responseBody.put("id", updatedDevice.getId());
+                responseBody.put("id", updatedDevice.getId());
                 responseBody.put("success", true);
             } else {
                 responseBody.put("error", "No Device");

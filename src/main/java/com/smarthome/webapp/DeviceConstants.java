@@ -8,4 +8,11 @@ public final class DeviceConstants {
     public static String MQTT_USER = "smarthome";
     public static String MQTT_PWD = "admin";
 
+    public static String[] VALID_OUTLET_SENSORS = {
+        "voltage",
+        "current",
+        "power",
+        "energy"
+    };
+
 }
