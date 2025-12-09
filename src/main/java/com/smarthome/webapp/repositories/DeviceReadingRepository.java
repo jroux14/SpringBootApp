@@ -14,6 +14,4 @@ public interface DeviceReadingRepository extends MongoRepository<DeviceReading, 
         sort = "{ 'timestamp': 1 }"
     )
     List<DeviceReading> findReadingsByDeviceId(String deviceId, Instant start, Instant end);
-
-    // List<DeviceReading> findByMetadataDeviceAndTimestampBetweenOrderByTimestampAsc(String device, Instant start, Instant end);
 }

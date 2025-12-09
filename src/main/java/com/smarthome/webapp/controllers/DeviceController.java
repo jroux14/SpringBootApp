@@ -1,6 +1,7 @@
 package com.smarthome.webapp.controllers;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,12 +21,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smarthome.webapp.interfaces.DeviceInterface;
 import com.smarthome.webapp.objects.Device;
+import com.smarthome.webapp.services.AggregationService;
 import com.smarthome.webapp.services.AuthService;
 import com.smarthome.webapp.services.DeviceService;
 
 @RestController
 @RequestMapping("smarthome/device/")
 public class DeviceController implements DeviceInterface {
+
+    @Autowired
+    private AggregationService aggregationService;
 
     @Autowired
     private DeviceService deviceService;
@@ -125,6 +130,65 @@ public class DeviceController implements DeviceInterface {
             Instant startTime = Instant.parse(start);
             Instant endTime = Instant.parse(end);
             resp = this.deviceService.getSensorReadingsByDeviceId(deviceId, startTime, endTime);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        return resp;
+    }
+
+    @GetMapping("/get/{sensorName}/data/{deviceId}/hourly")
+    public ResponseEntity<String> getHourlySensorReadingsByDeviceId(@PathVariable("deviceId") String deviceId, @PathVariable("sensorName") String sensorName, @RequestParam("start") String startIso, @RequestParam("end") String endIso) {
+        ResponseEntity<String> resp = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    
+        try {
+            Instant start = Instant.parse(startIso);
+            Instant end = Instant.parse(endIso);
+            resp = this.aggregationService.getHourlyForDay(deviceId, sensorName, start, end);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    
+        return resp;
+    }
+    @GetMapping("/get/{sensorName}/data/{deviceId}/daily")
+    public ResponseEntity<String> getDailySensorReadingsByDeviceId(@PathVariable("deviceId") String deviceId, @PathVariable("sensorName") String sensorName, @RequestParam("start") String startIso, @RequestParam("end") String endIso) {
+        ResponseEntity<String> resp = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    
+        try {
+            Instant start = Instant.parse(startIso);
+            Instant end = Instant.parse(endIso);
+            resp = this.aggregationService.getDailyForMonth(deviceId, sensorName, start, end);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    
+        return resp;
+    }
+    
+
+    @GetMapping("/get/{sensorName}/data/{deviceId}/monthly")
+    public ResponseEntity<String> getMonthlySensorReadingsByDeviceId(@PathVariable("deviceId") String deviceId, @PathVariable("sensorName") String sensorName, @RequestParam("start") String startIso, @RequestParam("end") String endIso) {
+        ResponseEntity<String> resp = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    
+        try {
+            Instant start = Instant.parse(startIso);
+            Instant end = Instant.parse(endIso);
+            resp = this.aggregationService.getMonthlyForYear(deviceId, sensorName, start, end);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+    
+        return resp;
+    }
+    
+
+    @GetMapping("/get/{sensorName}/data/{deviceId}/yearly")
+    public ResponseEntity<String> getYearlySensorReadingsByDeviceId(@PathVariable("deviceId") String deviceId, @PathVariable("sensorName") String sensorName, @RequestParam int start, @RequestParam int end) {
+        ResponseEntity<String> resp = new ResponseEntity<String>(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        try {
+            resp = this.aggregationService.getYearlyForRange(deviceId, sensorName, start, end);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
