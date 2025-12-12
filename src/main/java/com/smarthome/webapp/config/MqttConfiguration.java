@@ -1,11 +1,17 @@
 package com.smarthome.webapp.config;
 
+import static com.smarthome.webapp.constants.DeviceConstants.BROKER_URL;
+import static com.smarthome.webapp.constants.DeviceConstants.MQTT_ID;
+import static com.smarthome.webapp.constants.DeviceConstants.MQTT_PWD;
+import static com.smarthome.webapp.constants.DeviceConstants.MQTT_USER;
+
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.core.MessageProducer;
+import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
@@ -14,15 +20,17 @@ import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 
-import static com.smarthome.webapp.DeviceConstants.BROKER_URL;
-import static com.smarthome.webapp.DeviceConstants.MQTT_ID;
-import static com.smarthome.webapp.DeviceConstants.MQTT_USER;
-import static com.smarthome.webapp.DeviceConstants.MQTT_PWD;
+import com.smarthome.webapp.device.mqtt.MqttInboundService;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
+@RequiredArgsConstructor
 public class MqttConfiguration {
 
-    @Bean
+    private final MqttInboundService handler;
+
+    @Bean(name = "mqttInbound")
     public MqttPahoMessageDrivenChannelAdapter mqttMessageDrivenChannelAdapter() {
         MqttPahoMessageDrivenChannelAdapter adapter =
         new MqttPahoMessageDrivenChannelAdapter(BROKER_URL, MQTT_ID, mqttClientFactory(),
@@ -67,6 +75,14 @@ public class MqttConfiguration {
     @Bean
     public MessageChannel mqttOutboundChannel() {
         return new DirectChannel();
+    }
+
+    @Bean
+    public IntegrationFlow mqttInboundFlow(MqttPahoMessageDrivenChannelAdapter mqttInbound) {
+        return IntegrationFlow
+            .from(mqttInbound)
+            .handle(handler::handleMessage)
+            .get();
     }
 
 }

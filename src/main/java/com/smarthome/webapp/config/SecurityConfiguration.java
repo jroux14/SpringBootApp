@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,8 +19,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.smarthome.webapp.services.AuthService;
-import com.smarthome.webapp.jwt.JwtRequestFilter;
+import com.smarthome.webapp.auth.security.JwtRequestFilter;
+import com.smarthome.webapp.auth.service.AuthService;
 
 @Configuration
 @EnableWebSecurity
@@ -58,6 +59,7 @@ public class SecurityConfiguration {
         http.csrf(httpSecurityCsrfConfigurer -> httpSecurityCsrfConfigurer.disable())
             .cors().and()
             .authorizeHttpRequests()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/smarthome/auth/public/**").permitAll()  // Public endpoints
                 .requestMatchers("/smarthome/auth/private/**").authenticated()  // Secured endpoints
                 .requestMatchers("/smarthome/device/**").authenticated()
